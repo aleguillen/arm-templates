@@ -1,0 +1,18 @@
+{
+    "$schema": "https://aka.ms/azure-quickstart-templates-metadata-schema#",
+    "type": "QuickStart",
+    "itemDisplayName": "Create a Logic App using a template to Start/Stop VMs",
+    "icon": "logic",
+    "description": "This template creates a logic app to start VMs in a Resource Group every weekday in the morning and stop them in the evening.",
+    "summary": "Create a Logic App using a template to Start/Stop VMs",
+    "githubUsername": "aleguillen",
+    "docOwner": "aleguillen",
+    "dateUpdated": "2021-09-30",
+    "tags": {
+      "subscriptiontype": "Pays-as-you-go",
+      "resource": "Logic App",
+      "os": "Linux, Logic App",
+      "level": "beginner",
+      "cost": "$"
+    }
+  }
