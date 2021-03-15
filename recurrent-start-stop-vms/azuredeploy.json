@@ -189,5 +189,11 @@
         "scope": "[resourceGroup().id]"
       }
     }
-  ]
+  ],
+  "outputs": {
+    "logicAppIdentity": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '2019-05-01', 'Full').identity.principalId]"
+    }
+  }
 }
