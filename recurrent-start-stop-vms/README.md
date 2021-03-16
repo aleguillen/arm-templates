@@ -6,7 +6,7 @@
 
 Azure Logic Apps is a cloud service that automates the execution of your business processes. You use a graphical design tool called the Logic Apps Designer to arrange pre-made components into the sequence you need. The Designer sends a definition of your workflow to the Logic Apps execution engine. The execution engine launches your app when conditions are right and manages the compute resources needed to run it.
 
-This simple logic app manages your VMs to Start / Stop during Weekdays to save running costs.
+This simple logic app manages your Resource Group VMs schedule to Start in the morning and Stop in the evening during weekdays to save cost.
 
 For information about using this template, see [Create Azure Resource Manager templates for Azure Logic Apps](https://docs.microsoft.com/azure/logic-apps/logic-apps-create-deploy-template). To learn more about how to deploy the template, see the [quickstart](https://docs.microsoft.com/azure/logic-apps/quickstart-create-deploy-azure-resource-manager-template) article.
 
