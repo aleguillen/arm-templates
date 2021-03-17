@@ -67,28 +67,6 @@
         "description": "Specify exact minute of the Hour to start/stop VMs. Defaults to 0. E.g. If set to 30 it will start at 7:30 and stop at 19:30 each weekday."
       }
     },
-    "weekDays": {
-      "type": "array",
-      "defaultValue": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday"
-      ],
-      "allowedValues": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday"
-      ],
-      "metadata": {
-        "description": "Specify exact days of the day to Start/Stop the VMs."
-      }
-    },
     "timeZone": {
       "type": "string",
       "defaultValue": "Central Standard Time",
@@ -255,7 +233,14 @@
     "roleDefinitionId": "9980e02c-c2be-4d73-94e8-173b1dc7cf3c",
     "recurrenceHours": "[createArray(parameters('startTime'), parameters('stopTime'))]",
     "recurrenceMinutes": "[createArray(parameters('atMinute'))]",
-    "eveningAction": "[if(equals(parameters('morningAction'), 'start'), 'deallocate', 'start')]"
+    "eveningAction": "[if(equals(parameters('morningAction'), 'start'), 'deallocate', 'start')]",
+    "weekDays": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday"
+      ]
   },
   "resources": [
     {
@@ -318,7 +303,7 @@
                 "schedule": {
                   "hours": "[variables('recurrenceHours')]",
                   "minutes": "[variables('recurrenceMinutes')]",
-                  "weekDays": "[parameters('weekDays')]"
+                  "weekDays": "[variables('weekDays')]"
                 },
                 "timeZone": "@parameters('timeZone')"
               },
