@@ -438,7 +438,7 @@
               },
               "foreach": "@body('Filter_excluded_VM_resources')",
               "runAfter": {
-                "List_VMs_in_Resource_Group": [
+                "Filter_excluded_VM_resources": [
                   "Succeeded"
                 ]
               },
@@ -491,7 +491,7 @@
                   },
                   "foreach": "@body('Filter_excluded_VMSS_resources')",
                   "runAfter": {
-                    "List_VMSSs_in_Resource_Group": [
+                    "Filter_excluded_VMSS_resources": [
                       "Succeeded"
                     ]
                   },
