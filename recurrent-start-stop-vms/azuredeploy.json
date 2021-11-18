@@ -460,11 +460,7 @@
                       "x-ms-api-version": "2016-06-01"
                     }
                   },
-                  "runAfter": {
-                    "Variable_to_determine_action:_Start_(AM)_or_Stop_(PM)": [
-                      "Succeeded"
-                    ]
-                  },
+                  "runAfter": {},
                   "type": "ApiConnection"
                 },
                 "Filter_excluded_VMSS_resources": {
