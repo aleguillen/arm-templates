@@ -220,11 +220,37 @@
       "type": "string",
       "defaultValue": "start",
       "allowedValues": [
-        "start", 
+        "start",
         "deallocate"
       ],
       "metadata": {
         "description": "Specify the default action for morning ."
+      }
+    },
+    "runOn": {
+      "type": "string",
+      "defaultValue": "Weekdays",
+      "allowedValues": [
+        "Weekdays",
+        "Weekend",
+        "Week"
+      ],
+      "metadata": {
+        "description": "Specify the days to run. Weekdays: Mon-Fri, Weekend: Sat-Sun, Week: Mon-Sun."
+      }
+    },
+    "includeVMSS": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify wether to include VMSS in the start/stop operation."
+      }
+    },
+    "excludedResources": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify a comma-separated list of VMs or VMSSs to exclude from the resource group. Ex. VM1,VM2,VMSS1"
       }
     }
   },
@@ -234,13 +260,27 @@
     "recurrenceHours": "[createArray(parameters('startTime'), parameters('stopTime'))]",
     "recurrenceMinutes": "[createArray(parameters('atMinute'))]",
     "eveningAction": "[if(equals(parameters('morningAction'), 'start'), 'deallocate', 'start')]",
-    "weekDays": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday"
-      ]
+    "weekDays": "[if(equals(parameters('runOn'), 'Weekdays'), variables('workweek'), if(equals(parameters('runOn'), 'Weekend'), variables('weekend'), variables('allweek')))]",
+    "workweek": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ],
+    "weekend": [
+      "Saturday",
+      "Sunday"
+    ],
+    "allweek": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ]
   },
   "resources": [
     {
@@ -293,6 +333,14 @@
             "eveningAction": {
               "defaultValue": "[variables('eveningAction')]",
               "type": "String"
+            },
+            "includeVMSS": {
+              "defaultValue": "[parameters('includeVMSS')]",
+              "type": "Bool"
+            },
+            "excludedResources": {
+              "defaultValue": "[parameters('excludedResources')]",
+              "type": "String"
             }
           },
           "triggers": {
@@ -324,6 +372,23 @@
               "runAfter": {},
               "type": "InitializeVariable"
             },
+            "Excluded_Resources_Array": {
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "excludedResourcesArray",
+                    "type": "array",
+                    "value": "@split(parameters('excludedResources'),',')"
+                  }
+                ]
+              },
+              "runAfter": {
+                "Variable_to_determine_action:_Start_(AM)_or_Stop_(PM)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "InitializeVariable"
+            },
             "List_VMs_in_Resource_Group": {
               "inputs": {
                 "host": {
@@ -345,6 +410,18 @@
               },
               "type": "ApiConnection"
             },
+            "Filter_excluded_VM_resources": {
+              "inputs": {
+                "from": "@body('List_VMs_in_Resource_Group')?['value']",
+                "where": "@not(contains(variables('excludedResourcesArray'), item()?['name']))"
+              },
+              "runAfter": {
+                "List_VMs_in_Resource_Group": [
+                  "Succeeded"
+                ]
+              },
+              "type": "Query"
+            },
             "For_each_VM": {
               "actions": {
                 "Start_or_Stop_VM": {
@@ -353,19 +430,94 @@
                       "type": "ManagedServiceIdentity"
                     },
                     "method": "POST",
-                    "uri": "@{concat('https://management.azure.com', items('For_each_VM')?['id'], '/', variables('action'), '?api-version=2020-12-01')}"
+                    "uri": "@{concat('https://management.azure.com', items('For_each_VM')?['id'], '/', variables('action'), '?api-version=2021-07-01')}"
                   },
                   "runAfter": {},
                   "type": "Http"
                 }
               },
-              "foreach": "@body('List_VMs_in_Resource_Group')?['value']",
+              "foreach": "@body('Filter_excluded_VM_resources')",
               "runAfter": {
                 "List_VMs_in_Resource_Group": [
                   "Succeeded"
                 ]
               },
               "type": "Foreach"
+            },
+            "IF_VMSS_Included": {
+              "actions": {
+                "List_VMSSs_in_Resource_Group": {
+                  "inputs": {
+                    "host": {
+                      "connection": {
+                        "name": "@parameters('$connections')['arm']['connectionId']"
+                      }
+                    },
+                    "method": "get",
+                    "path": "[concat('/subscriptions/@{encodeURIComponent(', variables('singleQuote'), subscription().subscriptionId, variables('singleQuote'), ')}/resourceGroups/@{encodeURIComponent(', variables('singleQuote'), resourceGroup().name, variables('singleQuote'), ')}/resources')]",
+                    "queries": {
+                      "$filter": "resourceType eq 'Microsoft.Compute/virtualMachineScaleSets'",
+                      "x-ms-api-version": "2016-06-01"
+                    }
+                  },
+                  "runAfter": {
+                    "Variable_to_determine_action:_Start_(AM)_or_Stop_(PM)": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "ApiConnection"
+                },
+                "Filter_excluded_VMSS_resources": {
+                  "inputs": {
+                    "from": "@body('List_VMSSs_in_Resource_Group')?['value']",
+                    "where": "@not(contains(variables('excludedResourcesArray'), item()?['name']))"
+                  },
+                  "runAfter": {
+                    "List_VMSSs_in_Resource_Group": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Query"
+                },
+                "For_each_VMSS": {
+                  "actions": {
+                    "Start_or_Stop_VM": {
+                      "inputs": {
+                        "authentication": {
+                          "type": "ManagedServiceIdentity"
+                        },
+                        "method": "POST",
+                        "uri": "@{concat('https://management.azure.com', items('For_each_VMSS')?['id'], '/', variables('action'), '?api-version=2021-07-01')}"
+                      },
+                      "runAfter": {},
+                      "type": "Http"
+                    }
+                  },
+                  "foreach": "@body('Filter_excluded_VMSS_resources')",
+                  "runAfter": {
+                    "List_VMSSs_in_Resource_Group": [
+                      "Succeeded"
+                    ]
+                  },
+                  "type": "Foreach"
+                }
+              },
+              "expression": {
+                "and": [
+                  {
+                    "equals": [
+                      "@parameters('includeVMSS')",
+                      true
+                    ]
+                  }
+                ]
+              },
+              "runAfter": {
+                "Variable_to_determine_action:_Start_(AM)_or_Stop_(PM)": [
+                  "Succeeded"
+                ]
+              },
+              "type": "If"
             }
           }
         },
