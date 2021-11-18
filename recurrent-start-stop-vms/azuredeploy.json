@@ -13,7 +13,7 @@
       "type": "string",
       "defaultValue": "[resourceGroup().location]",
       "metadata": {
-        "description": "Location for all resources."
+        "description": "The name of the logic app to create. Default to current Resource Group's location."
       }
     },
     "startTime": {
@@ -34,7 +34,7 @@
         11
       ],
       "metadata": {
-        "description": "Specify exact hour of the morning to start VMs."
+        "description": "Specify exact hour of the morning to start VMs. E.g. is set to 7 it will start VMs at 7 AM."
       }
     },
     "stopTime": {
@@ -55,7 +55,7 @@
         23
       ],
       "metadata": {
-        "description": "Specify exact hour of the evening to stop VMs."
+        "description": "Specify exact hour of the evening to stop VMs. E.g. is set to 19 it will stop VMs at 7 PM."
       }
     },
     "atMinute": {
@@ -213,7 +213,7 @@
         "Line Islands Standard Time"
       ],
       "metadata": {
-        "description": "Time Zone for your Logic App recurrant trigger."
+        "description": "Time Zone for your Logic App recurrent trigger."
       }
     },
     "morningAction": {
@@ -224,7 +224,7 @@
         "deallocate"
       ],
       "metadata": {
-        "description": "Specify the default action for morning ."
+        "description": "Specify the default action for morning. Defaults to Start. E.g. if set to Deallocate it will stop the VMs during AM hours and start during PM hours."
       }
     },
     "runOn": {
